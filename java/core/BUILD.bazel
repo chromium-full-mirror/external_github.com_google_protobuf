@@ -437,6 +437,7 @@ junit_tests(
         exclude = [
             "src/test/java/com/google/protobuf/DecodeUtf8Test.java",
             "src/test/java/com/google/protobuf/IsValidUtf8Test.java",
+            "src/test/java/com/google/protobuf/IsValidUtf8FourByteTest.java",
             "src/test/java/com/google/protobuf/TestUtil.java",
             "src/test/java/com/google/protobuf/TestUtilLite.java",
             "src/test/java/com/google/protobuf/RuntimeVersionTest.java",
@@ -472,6 +473,7 @@ junit_tests(
     size = "large",
     srcs = [
         "src/test/java/com/google/protobuf/DecodeUtf8Test.java",
+        "src/test/java/com/google/protobuf/IsValidUtf8FourByteTest.java",
         "src/test/java/com/google/protobuf/IsValidUtf8Test.java",
         "src/test/java/com/google/protobuf/IsValidUtf8TestUtil.java",
     ],
@@ -560,6 +562,7 @@ LITE_TEST_EXCLUSIONS = [
     "src/test/java/com/google/protobuf/GeneratorNamesTest.java",
     "src/test/java/com/google/protobuf/ImportOptionTest.java",
     "src/test/java/com/google/protobuf/InternalLazyFieldTest.java",
+    "src/test/java/com/google/protobuf/IsValidUtf8FourByteTest.java",
     "src/test/java/com/google/protobuf/LargeEnumTest.java",
     "src/test/java/com/google/protobuf/LazilyParsedMessageSetTest.java",
     "src/test/java/com/google/protobuf/LazyFieldTest.java",
@@ -658,6 +661,7 @@ junit_tests(
             # Excluded in core_tests
             "src/test/java/com/google/protobuf/DecodeUtf8Test.java",
             "src/test/java/com/google/protobuf/IsValidUtf8Test.java",
+            "src/test/java/com/google/protobuf/IsValidUtf8FourByteTest.java",
             "src/test/java/com/google/protobuf/TestUtil.java",
             "src/test/java/com/google/protobuf/TestUtilLite.java",
             "src/test/java/com/google/protobuf/RuntimeVersionTest.java",
@@ -722,6 +726,7 @@ junit_tests(
             # Excluded in core_tests
             "src/test/java/com/google/protobuf/DecodeUtf8Test.java",
             "src/test/java/com/google/protobuf/IsValidUtf8Test.java",
+            "src/test/java/com/google/protobuf/IsValidUtf8FourByteTest.java",
             "src/test/java/com/google/protobuf/TestUtil.java",
             "src/test/java/com/google/protobuf/TestUtilLite.java",
             "src/test/java/com/google/protobuf/RuntimeVersionTest.java",
