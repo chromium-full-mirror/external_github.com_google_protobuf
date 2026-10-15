@@ -1043,7 +1043,7 @@ void MessageGenerator::GenerateSingularFieldHasBits(
         {Sub{"ASSUME",
              [&] {
                if (field->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE &&
-                   !IsLazy(field, options_)) {
+                   !ShouldSplit(field, options_) && !IsLazy(field, options_)) {
                  // We maintain the invariant that for a submessage x, has_x()
                  // returning true implies that x_ is not null. By giving this
                  // information to the compiler, we allow it to eliminate
@@ -1137,13 +1137,6 @@ void MessageGenerator::GenerateFieldClear(const FieldDescriptor* field,
                       }
                     )cc");
               } else {
-                // TODO: figure out if early return breaks tracking
-                if (ShouldSplit(field, options_)) {
-                  p->Emit(R"cc(
-                    if (ABSL_PREDICT_TRUE(IsSplitMessageDefault()))
-                      return;
-                  )cc");
-                }
                 field_generators_.get(field).GenerateClearingCode(p);
                 if (HasHasbit(field, options_)) {
                   auto v = p->WithVars(HasBitVars(field));
@@ -1764,14 +1757,55 @@ void MessageGenerator::GeneratePrivateHelpers(io::Printer* p) {
           {"decl_split_methods",
            [&] {
              if (!ShouldSplit(descriptor_, options_)) return;
-             p->Emit({{"split_default",
-                       SplitDefaultInstanceName(descriptor_, options_)}},
-                     R"cc(
-                       inline bool IsSplitMessageDefault() const {
-                         return $split$ == reinterpret_cast<const Impl_::Split*>(&$split_default$);
+             p->Emit(
+                 {{"split_default",
+                   SplitDefaultInstanceName(descriptor_, options_)}},
+                 R"cc(
+                   inline bool IsSplitMessageDefault() const {
+                     return $split$ == reinterpret_cast<const Impl_::Split*>(&$split_default$);
+                   }
+                   PROTOBUF_NOINLINE void PrepareSplitMessageForWrite();
+
+                   template <typename T, typename Split>
+                   PROTOBUF_ALWAYS_INLINE decltype(auto) GetSplitField_(
+                       T Split::* PROTOBUF_NONNULL address) const {
+                     if constexpr ($pbi$::kIsRawPtr<T>) {
+                       return *($split$->*address);
+                     } else if constexpr (std::is_pointer_v<T>) {
+                       using SubT = std::remove_pointer_t<T>;
+                       return static_cast<const SubT*>($split$->*address);
+                     } else {
+                       return ::std::as_const($split$->*address);
+                     }
+                   }
+
+                   template <typename T, typename Split>
+                   PROTOBUF_ALWAYS_INLINE auto* PROTOBUF_NULLABLE
+                   TryMutableSplitField_(T Split::* PROTOBUF_NONNULL address) {
+                     if constexpr ($pbi$::kIsRawPtr<T>) {
+                       auto& raw = $split$->*address;
+                       return raw.IsDefault() ? nullptr : &*raw;
+                     } else {
+                       return IsSplitMessageDefault() ? nullptr : &($split$->*address);
+                     }
+                   }
+
+                   template <typename T, typename Split>
+                   PROTOBUF_ALWAYS_INLINE auto& MutableSplitField_(
+                       T Split::* PROTOBUF_NONNULL address) {
+                     ABSL_DCHECK_NE(this, &default_instance());
+                     PrepareSplitMessageForWrite();
+                     if constexpr ($pbi$::kIsRawPtr<T>) {
+                       auto& raw = $split$->*address;
+                       if (raw.IsDefault()) {
+                         raw.Set($pb$::Arena::Create<typename T::value_type>(GetArena()));
                        }
-                       PROTOBUF_NOINLINE void PrepareSplitMessageForWrite();
-                     )cc");
+                       return *raw;
+                     } else {
+                       return $split$->*address;
+                     }
+                   }
+                 )cc");
            }},
           {"decl_field_accessors_private_helpers",
            [&] {
